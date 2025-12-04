@@ -1,6 +1,6 @@
 # Guía de Inicio Rápido - REST API Demo
 
-## Prerequisitos
+## Prerequisitos PRUEBA
 
 Antes de comenzar, asegúrate de tener instalado:
 - Java JDK 17 o superior
