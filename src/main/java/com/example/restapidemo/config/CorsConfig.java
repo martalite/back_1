@@ -6,8 +6,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
-import java.util.Arrays;
-
 /**
  * Configuración de CORS (Cross-Origin Resource Sharing)
  * Permite que aplicaciones desde otros orígenes (puertos/dominios) puedan
