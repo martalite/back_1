@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,167 +15,142 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Controlador REST para gestionar usuarios
- * Este controlador maneja todas las peticiones HTTP relacionadas con usuarios
- */
 @RestController
 @RequestMapping("/api/users")
 @Tag(name = "Users", description = "API para gestionar usuarios")
 public class UserController {
-    
-    // Simulamos una base de datos en memoria con una lista
+
     private final List<User> users = new ArrayList<>();
     private Long nextId = 1L;
-    
-    // Constructor que inicializa algunos usuarios de ejemplo
+
+    // --------------------------------------------------------
+    // CONSTRUCTOR — Lista inicial con todos los campos llenos
+    // --------------------------------------------------------
     public UserController() {
-        users.add(new User(nextId++, "Juan Pérez", "juan@example.com", 30));
-        users.add(new User(nextId++, "María García", "maria@example.com", 25));
-        users.add(new User(nextId++, "Carlos López", "carlos@example.com", 35));
+
+        users.add(new User(
+                nextId++, "Juan", "Pérez", "juan@example.com", 30,
+                "m", "Calle 123", "Madrid", "España", "Developer", "Master"
+        ));
+
+        users.add(new User(
+                nextId++, "María", "García", "maria@example.com", 25,
+                "f", "Av. Libertad 45", "Barcelona", "España", "Analista", "Grado"
+        ));
+
+        users.add(new User(
+                nextId++, "Carlos", "López", "carlos@example.com", 35,
+                "m", "Diagonal 100", "Barcelona", "España", "Manager", "Doctorado"
+        ));
     }
-    
-    /**
-     * GET - Obtener todos los usuarios
-     * Ejemplo: GET http://localhost:8080/api/users
-     */
+
+    // --------------------------------------------------------
+    // GET  — Obtener todos los usuarios
+    // --------------------------------------------------------
     @GetMapping
-    @Operation(
-        summary = "Obtener todos los usuarios",
-        description = "Retorna una lista con todos los usuarios registrados en el sistema"
-    )
-    @ApiResponse(responseCode = "200", description = "Lista de usuarios obtenida exitosamente")
+    @Operation(summary = "Obtener todos los usuarios")
     public ResponseEntity<List<User>> getAllUsers() {
         return ResponseEntity.ok(users);
     }
-    
-    /**
-     * GET - Obtener un usuario por ID
-     * Ejemplo: GET http://localhost:8080/api/users/1
-     */
+
+    // --------------------------------------------------------
+    // GET por ID
+    // --------------------------------------------------------
     @GetMapping("/{id}")
-    @Operation(
-        summary = "Obtener un usuario por ID",
-        description = "Retorna la información de un usuario específico basándose en su ID"
-    )
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Usuario encontrado"),
-        @ApiResponse(responseCode = "404", description = "Usuario no encontrado")
-    })
-    public ResponseEntity<User> getUserById(
-            @Parameter(description = "ID del usuario a buscar", required = true)
-            @PathVariable Long id) {
-        
-        Optional<User> user = users.stream()
+    @Operation(summary = "Obtener un usuario por ID")
+    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+
+        return users.stream()
                 .filter(u -> u.getId().equals(id))
-                .findFirst();
-        
-        return user.map(ResponseEntity::ok)
+                .findFirst()
+                .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
-    
-    /**
-     * GET - Buscar usuarios por nombre
-     * Ejemplo: GET http://localhost:8080/api/users/search?nombre=Juan
-     */
+
+    // --------------------------------------------------------
+    // SEARCH — Buscar por nombre o apellidos
+    // --------------------------------------------------------
     @GetMapping("/search")
-    @Operation(
-        summary = "Buscar usuarios por nombre",
-        description = "Busca usuarios cuyo nombre contenga el texto especificado (case-insensitive)"
-    )
-    @ApiResponse(responseCode = "200", description = "Búsqueda realizada exitosamente")
-    public ResponseEntity<List<User>> searchUsersByName(
-            @Parameter(description = "Texto a buscar en el nombre del usuario")
+    @Operation(summary = "Buscar usuarios por nombre")
+    public ResponseEntity<List<User>> searchUsers(
             @RequestParam(required = false) String nombre) {
-        
+
         if (nombre == null || nombre.trim().isEmpty()) {
             return ResponseEntity.ok(users);
         }
-        
-        List<User> filteredUsers = users.stream()
-                .filter(u -> u.getNombre().toLowerCase().contains(nombre.toLowerCase()))
+
+        String filter = nombre.toLowerCase();
+
+        List<User> filtered = users.stream()
+                .filter(u ->
+                        u.getNombres().toLowerCase().contains(filter) ||
+                        u.getApellidos().toLowerCase().contains(filter)
+                )
                 .toList();
-        
-        return ResponseEntity.ok(filteredUsers);
+
+        return ResponseEntity.ok(filtered);
     }
-    
-    /**
-     * POST - Crear un nuevo usuario
-     * Ejemplo: POST http://localhost:8080/api/users
-     * Body: { "nombre": "Ana Torres", "email": "ana@example.com", "edad": 28 }
-     */
+
+    // --------------------------------------------------------
+    // POST — Crear usuario
+    // --------------------------------------------------------
     @PostMapping
-    @Operation(
-        summary = "Crear un nuevo usuario",
-        description = "Crea un nuevo usuario en el sistema. El ID se asigna automáticamente."
-    )
-    @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "Usuario creado exitosamente"),
-        @ApiResponse(responseCode = "400", description = "Datos de usuario inválidos")
-    })
+    @Operation(summary = "Crear un usuario")
     public ResponseEntity<User> createUser(@RequestBody User user) {
+
         user.setId(nextId++);
         users.add(user);
+
         return ResponseEntity.status(HttpStatus.CREATED).body(user);
     }
-    
-    /**
-     * PUT - Actualizar un usuario existente
-     * Ejemplo: PUT http://localhost:8080/api/users/1
-     * Body: { "nombre": "Juan Pérez Actualizado", "email": "juan.nuevo@example.com", "edad": 31 }
-     */
+
+    // --------------------------------------------------------
+    // PUT — Actualizar usuario COMPLETO
+    // --------------------------------------------------------
     @PutMapping("/{id}")
-    @Operation(
-        summary = "Actualizar un usuario",
-        description = "Actualiza la información completa de un usuario existente"
-    )
-    @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Usuario actualizado exitosamente"),
-        @ApiResponse(responseCode = "404", description = "Usuario no encontrado")
-    })
+    @Operation(summary = "Actualizar un usuario")
     public ResponseEntity<User> updateUser(
-            @Parameter(description = "ID del usuario a actualizar", required = true)
             @PathVariable Long id,
             @RequestBody User updatedUser) {
-        
-        Optional<User> existingUser = users.stream()
+
+        Optional<User> existingUserOpt = users.stream()
                 .filter(u -> u.getId().equals(id))
                 .findFirst();
-        
-        if (existingUser.isPresent()) {
-            User user = existingUser.get();
-            user.setNombre(updatedUser.getNombre());
-            user.setEmail(updatedUser.getEmail());
-            user.setEdad(updatedUser.getEdad());
-            return ResponseEntity.ok(user);
+
+        if (existingUserOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
         }
-        
-        return ResponseEntity.notFound().build();
+
+        User user = existingUserOpt.get();
+
+        // Actualizar todos los campos
+        user.setNombres(updatedUser.getNombres());
+        user.setApellidos(updatedUser.getApellidos());
+        user.setEmail(updatedUser.getEmail());
+        user.setEdad(updatedUser.getEdad());
+        user.setSexo(updatedUser.getSexo());
+        user.setDireccion(updatedUser.getDireccion());
+        user.setCiudad(updatedUser.getCiudad());
+        user.setPais(updatedUser.getPais());
+        user.setCargo(updatedUser.getCargo());
+        user.setNivelEstudios(updatedUser.getNivelEstudios());
+
+        return ResponseEntity.ok(user);
     }
-    
-    /**
-     * DELETE - Eliminar un usuario
-     * Ejemplo: DELETE http://localhost:8080/api/users/1
-     */
+
+    // --------------------------------------------------------
+    // DELETE — Eliminar usuario
+    // --------------------------------------------------------
     @DeleteMapping("/{id}")
-    @Operation(
-        summary = "Eliminar un usuario",
-        description = "Elimina un usuario del sistema basándose en su ID"
-    )
-    @ApiResponses({
-        @ApiResponse(responseCode = "204", description = "Usuario eliminado exitosamente"),
-        @ApiResponse(responseCode = "404", description = "Usuario no encontrado")
-    })
-    public ResponseEntity<Void> deleteUser(
-            @Parameter(description = "ID del usuario a eliminar", required = true)
-            @PathVariable Long id) {
-        
+    @Operation(summary = "Eliminar un usuario")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+
         boolean removed = users.removeIf(u -> u.getId().equals(id));
-        
+
         if (removed) {
             return ResponseEntity.noContent().build();
         }
-        
+
         return ResponseEntity.notFound().build();
     }
 }

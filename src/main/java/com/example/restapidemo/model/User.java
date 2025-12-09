@@ -5,8 +5,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Modelo de datos para un Usuario
- * Representa la información básica de un usuario
+ * Modelo de Usuario COMPLETO
+ * Compatible al 100% con el formulario de ExtJS
  */
 @Data
 @AllArgsConstructor
@@ -14,8 +14,18 @@ import lombok.NoArgsConstructor;
 public class User {
 
     private Long id;
-    private String nombre;
+
+    private String nombres;        // Ej: "Juan"
+    private String apellidos;      // Ej: "Pérez"
+
     private String email;
     private int edad;
 
+    private String sexo;           // m / f
+    private String direccion;
+    private String ciudad;
+    private String pais;
+
+    private String cargo;          // Ej: "Developer"
+    private String nivelEstudios;  // Ej: "Master"
 }
