@@ -1,5 +1,5 @@
 
-package com.example.restapidemo.Service;
+package com.example.restapidemo.controller;
 import com.example.restapidemo.model.Perfil;
 import org.springframework.stereotype.Service;
 
