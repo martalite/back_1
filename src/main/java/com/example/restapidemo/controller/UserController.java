@@ -1,122 +1,83 @@
 package com.example.restapidemo.controller;
 
+import com.example.restapidemo.service.PerfilService;
+import com.example.restapidemo.service.UserService;
 import com.example.restapidemo.model.User;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.*;
+
+import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
+@CrossOrigin(origins = "*")
 public class UserController {
 
-    private final List<User> users = new ArrayList<>();
-    private Long nextId = 1L;
+    private final UserService userService;
+    private final PerfilService perfilService;
 
-    public UserController() {
-
-        users.add(new User(
-                nextId++,              // id
-                "Juan",                // nombres
-                "Pérez",               // apellidos
-                "juan@example.com",    // email
-                30,                    // edad
-                "m",                   // sexo
-                "Diagonal 100",        // direccion
-                "Barcelona",           // ciudad
-                "España",              // pais
-                "Manager",             // cargo
-                "Doctorado",           // nivelEstudios
-                1L,                    // rolId
-                "Administrador"        // rolNombre
-        ));
-
-        users.add(new User(
-                nextId++,
-                "María",
-                "García",
-                "maria@example.com",
-                25,
-                "f",
-                "Calle Luna 45",
-                "Madrid",
-                "España",
-                "Analista",
-                "Master",
-                2L,
-                "Empleado"
-        ));
-
-        users.add(new User(
-                nextId++,
-                "Carlos",
-                "López",
-                "carlos@example.com",
-                35,
-                "m",
-                "Av. Sol 22",
-                "Sevilla",
-                "España",
-                "Supervisor",
-                "Licenciatura",
-                3L,
-                "Invitado"
-        ));
+    public UserController(UserService userService, PerfilService perfilService) {
+        this.userService = userService;
+        this.perfilService = perfilService;
     }
 
     @GetMapping
-    public ResponseEntity<List<User>> getAll() {
-        return ResponseEntity.ok(users);
+    public List<User> getAll() {
+        return userService.findAll();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getById(@PathVariable Long id) {
-        return users.stream()
-                .filter(u -> u.getId().equals(id))
-                .findFirst()
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<?> getById(@PathVariable Long id) {
+        Optional<User> userOpt = userService.findById(id);
+        return userOpt.<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<User> create(@RequestBody User user) {
-        user.setId(nextId++);
-        users.add(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(user);
+    public ResponseEntity<?> create(@RequestBody User user) {
+
+        if (user.getPerfilId() == null) {
+            return ResponseEntity.badRequest()
+                    .body("El perfil es obligatorio.");
+        }
+
+        if (!perfilService.existsById(user.getPerfilId())) {
+            return ResponseEntity.badRequest()
+                    .body("El perfil seleccionado no existe.");
+        }
+
+        User creado = userService.create(user);
+        return new ResponseEntity<>(creado, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<User> update(@PathVariable Long id, @RequestBody User data) {
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody User user) {
 
-        Optional<User> u = users.stream().filter(x -> x.getId().equals(id)).findFirst();
+        if (user.getPerfilId() == null) {
+            return ResponseEntity.badRequest()
+                    .body("El perfil es obligatorio.");
+        }
 
-        if (u.isEmpty()) return ResponseEntity.notFound().build();
+        if (!perfilService.existsById(user.getPerfilId())) {
+            return ResponseEntity.badRequest()
+                    .body("El perfil seleccionado no existe.");
+        }
 
-        User user = u.get();
-
-        user.setNombres(data.getNombres());
-        user.setApellidos(data.getApellidos());
-        user.setEmail(data.getEmail());
-        user.setEdad(data.getEdad());
-        user.setSexo(data.getSexo());
-        user.setDireccion(data.getDireccion());
-        user.setCiudad(data.getCiudad());
-        user.setPais(data.getPais());
-        user.setCargo(data.getCargo());
-        user.setNivelEstudios(data.getNivelEstudios());
-        user.setRolId(data.getRolId());
-        user.setRolNombre(data.getRolNombre());
-
-        return ResponseEntity.ok(user);
+        Optional<User> actualizado = userService.update(id, user);
+        return actualizado.<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-
-        boolean assigned = users.removeIf(u -> u.getId().equals(id));
-
-        if (assigned) return ResponseEntity.noContent().build();
-
-        return ResponseEntity.notFound().build();
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        boolean eliminado = userService.delete(id);
+        if (eliminado) {
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 }
