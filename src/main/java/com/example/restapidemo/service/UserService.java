@@ -15,10 +15,36 @@ public class UserService {
 
     public UserService() {
 
-        // DATOS DE PRUEBA
-        users.add(new User(nextId++, "Juan", "Pérez", "juan@example.com", 30, 1L));
-        users.add(new User(nextId++, "María", "García", "maria@example.com", 25, 2L));
-        users.add(new User(nextId++, "Carlos", "López", "carlos@example.com", 35, 3L));
+        // =========================
+        // DATOS DE PRUEBA COMPLETOS
+        // =========================
+
+        User u1 = new User(nextId++, "Juan", "Pérez", "juan@example.com", 30, 1L);
+        u1.setDireccion("Calle Mayor 123");
+        u1.setCiudad("Madrid");
+        u1.setPais("España");
+        u1.setCargo("Administrador de Sistemas");
+        u1.setNivelEstudios("Universitario");
+        u1.setSexo("Masculino");
+        users.add(u1);
+
+        User u2 = new User(nextId++, "María", "García", "maria@example.com", 25, 2L);
+        u2.setDireccion("Av. Diagonal 456");
+        u2.setCiudad("Barcelona");
+        u2.setPais("España");
+        u2.setCargo("Analista de Datos");
+        u2.setNivelEstudios("Máster");
+        u2.setSexo("Femenino");
+        users.add(u2);
+
+        User u3 = new User(nextId++, "Carlos", "López", "carlos@example.com", 35, 3L);
+        u3.setDireccion("C/ Gran Vía 89");
+        u3.setCiudad("Valencia");
+        u3.setPais("España");
+        u3.setCargo("Supervisor");
+        u3.setNivelEstudios("FP Superior");
+        u3.setSexo("Masculino");
+        users.add(u3);
     }
 
     // =========================
@@ -37,9 +63,11 @@ public class UserService {
 
     public User create(User user) {
         user.setId(nextId++);
+
         if (user.getCentrosIds() == null) {
             user.setCentrosIds(new ArrayList<>());
         }
+
         users.add(user);
         return user;
     }
@@ -53,7 +81,15 @@ public class UserService {
             u.setEdad(userActualizado.getEdad());
             u.setPerfilId(userActualizado.getPerfilId());
 
-            // 🔥 CLAVE: GUARDAR CENTROS
+            // 🔥 NUEVOS CAMPOS
+            u.setDireccion(userActualizado.getDireccion());
+            u.setCiudad(userActualizado.getCiudad());
+            u.setPais(userActualizado.getPais());
+            u.setCargo(userActualizado.getCargo());
+            u.setNivelEstudios(userActualizado.getNivelEstudios());
+            u.setSexo(userActualizado.getSexo());
+
+            // 🔥 CENTROS
             u.setCentrosIds(
                 userActualizado.getCentrosIds() != null
                     ? userActualizado.getCentrosIds()
